@@ -14,6 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const input = ref('')
+const isComposing = ref(false)
 
 function handleSend() {
   if (props.isStreaming || !input.value.trim()) return
@@ -22,7 +23,7 @@ function handleSend() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && !isComposing.value && !e.isComposing) {
     e.preventDefault()
     handleSend()
   }
@@ -38,6 +39,8 @@ function handleKeydown(e: KeyboardEvent) {
         rows="2"
         class="min-h-[40px] flex-1 resize-none text-sm"
         @keydown="handleKeydown"
+        @compositionstart="isComposing = true"
+        @compositionend="isComposing = false"
       />
       <Button
         v-if="isStreaming"
