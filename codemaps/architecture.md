@@ -2,7 +2,7 @@
 _Updated: 2026-02-27_
 
 ## Project
-**Surf Copilot** — Chrome Extension (Manifest V3)
+**surfie** — Chrome Extension (Manifest V3)
 AI-powered side panel chat companion using Claude models.
 
 ## Tech Stack

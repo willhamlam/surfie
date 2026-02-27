@@ -53,7 +53,7 @@ watch(
         class="flex h-full flex-col items-center justify-center gap-2 p-8 text-center"
       >
         <p class="text-lg">🏄</p>
-        <p class="text-sm font-medium">Surf Copilot</p>
+        <p class="text-sm font-medium">surfie</p>
         <p class="text-xs text-muted-foreground">
           Ask anything about the current page, or just chat.
         </p>

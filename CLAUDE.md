@@ -12,9 +12,13 @@ npm run type-check # TypeScript type checking (no emit)
 
 There is no test suite. Load the extension in Chrome via `chrome://extensions` → "Load unpacked" → select `dist/`.
 
+## Design Philosophy
+
+最简 agent：工具和能力作为组件按需接入，不要过度设计，按需构建。
+
 ## Architecture
 
-**Surf Copilot** is a Chrome Extension (Manifest V3) with a side panel UI. There is no backend — all API calls go directly from the browser to Anthropic and Tavily.
+**surfie** is a Chrome Extension (Manifest V3) with a side panel UI. There is no backend — all API calls go directly from the browser to Anthropic and Tavily.
 
 ### Extension structure
 - `src/background/index.ts` — service worker (minimal, lifecycle only)

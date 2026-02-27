@@ -1,4 +1,4 @@
-# Surf Copilot - Chrome Extension 实现方案
+# surfie - Chrome Extension 实现方案
 
 ## Context
 
@@ -16,7 +16,7 @@
 ## 项目结构
 
 ```
-surf-copilot/
+surfie/
 ├── manifest.json
 ├── package.json
 ├── vite.config.ts
