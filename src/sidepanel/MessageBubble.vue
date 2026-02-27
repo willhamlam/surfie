@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import type { ChatMessage } from '@/types/chat'
 import { Badge } from '@/components/ui/badge'
-import { ChevronDown, ChevronRight, Search, Brain } from 'lucide-vue-next'
+import { ChevronDown, ChevronRight, Search, Brain, FileText } from 'lucide-vue-next'
 
 const props = defineProps<{
   message: ChatMessage
@@ -11,7 +11,14 @@ const props = defineProps<{
 }>()
 
 const showThinking = ref(false)
-const showToolDetails = ref(false)
+const openToolDetails = ref<Set<string>>(new Set())
+
+function toggleToolDetails(id: string) {
+  const next = new Set(openToolDetails.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  openToolDetails.value = next
+}
 
 const isUser = props.message.role === 'user'
 </script>
@@ -46,36 +53,6 @@ const isUser = props.message.role === 'user'
         <pre class="whitespace-pre-wrap font-sans">{{ message.thinkingContent }}</pre>
       </div>
 
-      <!-- Tool calls -->
-      <div v-if="message.toolCalls?.length" class="space-y-1">
-        <div
-          v-for="tc in message.toolCalls"
-          :key="tc.id"
-          class="rounded-md border bg-muted/30 p-2"
-        >
-          <button
-            class="flex w-full items-center gap-1.5 text-xs"
-            @click="showToolDetails = !showToolDetails"
-          >
-            <Search :size="12" class="text-muted-foreground" />
-            <span class="font-medium">{{ tc.name === 'tavily_search' ? 'Searching' : tc.name }}</span>
-            <span class="text-muted-foreground">{{ (tc.params as Record<string, string>).query }}</span>
-            <Badge
-              :variant="tc.status === 'done' ? 'secondary' : tc.status === 'error' ? 'destructive' : 'outline'"
-              class="ml-auto text-[10px]"
-            >
-              {{ tc.status }}
-            </Badge>
-          </button>
-          <div
-            v-if="showToolDetails && tc.result"
-            class="mt-2 max-h-40 overflow-y-auto text-xs text-muted-foreground"
-          >
-            <pre class="whitespace-pre-wrap font-sans">{{ tc.result }}</pre>
-          </div>
-        </div>
-      </div>
-
       <!-- Text content -->
       <div
         v-if="message.content"
@@ -94,6 +71,37 @@ const isUser = props.message.role === 'user'
         class="flex items-center gap-1 text-sm text-muted-foreground"
       >
         <span class="inline-block h-4 w-1 animate-pulse bg-foreground" />
+      </div>
+
+      <!-- Tool calls -->
+      <div v-if="message.toolCalls?.length" class="space-y-1">
+        <div
+          v-for="tc in message.toolCalls"
+          :key="tc.id"
+          class="rounded-md border bg-muted/30 p-2"
+        >
+          <button
+            class="flex w-full items-center gap-1.5 text-xs"
+            @click="toggleToolDetails(tc.id)"
+          >
+            <FileText v-if="tc.name === 'read_page'" :size="12" class="text-muted-foreground" />
+            <Search v-else :size="12" class="text-muted-foreground" />
+            <span class="font-medium">{{ tc.name === 'read_page' ? 'Reading page' : tc.name === 'tavily_search' ? 'Searching' : tc.name }}</span>
+            <span class="text-muted-foreground">{{ tc.name === 'tavily_search' ? (tc.params as Record<string, string>).query : '' }}</span>
+            <Badge
+              :variant="tc.status === 'done' ? 'secondary' : tc.status === 'error' ? 'destructive' : 'outline'"
+              class="ml-auto text-[10px]"
+            >
+              {{ tc.status }}
+            </Badge>
+          </button>
+          <div
+            v-if="openToolDetails.has(tc.id) && tc.result"
+            class="mt-2 max-h-40 overflow-y-auto text-xs text-muted-foreground"
+          >
+            <pre class="whitespace-pre-wrap font-sans">{{ tc.result }}</pre>
+          </div>
+        </div>
       </div>
     </div>
   </div>

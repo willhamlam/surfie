@@ -4,6 +4,7 @@ import type { Settings } from '@/types/settings'
 import type { AssistantMessage, Message, UserMessage, ToolResultMessage } from '@/lib/ai'
 import { createModel, buildContext, streamChat } from '@/lib/ai'
 import { getTavilyTool, executeTavilySearch } from '@/lib/tools/tavily-search'
+import { getReadPageTool, executeReadPage } from '@/lib/tools/read-page'
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
@@ -47,7 +48,7 @@ export function useChat(getSettings: () => Settings) {
         if (msg.content) {
           content.push({ type: 'text', text: msg.content })
         }
-        if (msg.toolCalls) {
+        if (Array.isArray(msg.toolCalls)) {
           for (const tc of msg.toolCalls) {
             content.push({
               type: 'toolCall',
@@ -64,7 +65,7 @@ export function useChat(getSettings: () => Settings) {
         } as unknown as AssistantMessage)
 
         // Add tool results after assistant message
-        if (msg.toolCalls) {
+        if (Array.isArray(msg.toolCalls)) {
           for (const tc of msg.toolCalls) {
             if (tc.result != null) {
               result.push({
@@ -118,7 +119,10 @@ export function useChat(getSettings: () => Settings) {
 
   async function runStreamLoop(settings: Settings, signal: AbortSignal) {
     const model = createModel(settings)
-    const tools = settings.tavilyApiKey ? [getTavilyTool()] : []
+    const tools = [
+      ...(settings.tavilyApiKey ? [getTavilyTool()] : []),
+      getReadPageTool(),
+    ]
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       const piMessages = toPiMessages(messages.value)
@@ -203,6 +207,9 @@ export function useChat(getSettings: () => Settings) {
     settings: Settings,
     signal: AbortSignal,
   ): Promise<string> {
+    if (tc.name === 'read_page') {
+      return executeReadPage(signal)
+    }
     if (tc.name === 'tavily_search') {
       return executeTavilySearch(
         tc.params as { query: string },
@@ -223,7 +230,10 @@ export function useChat(getSettings: () => Settings) {
   }
 
   function loadMessages(msgs: ReadonlyArray<ChatMessage>) {
-    messages.value = [...msgs]
+    messages.value = msgs.map(msg => ({
+      ...msg,
+      toolCalls: Array.isArray(msg.toolCalls) ? msg.toolCalls : undefined,
+    }))
   }
 
   return {
