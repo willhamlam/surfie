@@ -57,7 +57,7 @@ onMounted(() => {
   <div class="flex h-screen flex-col bg-background text-foreground">
     <header class="flex items-center justify-between border-b px-3 py-2">
       <div class="min-w-0 flex-1">
-        <h1 class="text-sm font-semibold">Surf Copilot</h1>
+        <h1 class="text-sm font-semibold">surfie</h1>
         <p
           v-if="currentView === 'chat' && pageTitle"
           class="truncate text-[11px] text-muted-foreground"

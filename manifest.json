@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Surf Copilot",
+  "name": "surfie",
   "version": "0.1.0",
   "description": "AI-powered web reading companion",
   "permissions": [
@@ -12,7 +12,7 @@
   ],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_title": "Open Surf Copilot"
+    "default_title": "Open surfie"
   },
   "side_panel": {
     "default_path": "src/sidepanel/index.html"
