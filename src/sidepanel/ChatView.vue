@@ -35,7 +35,10 @@ watch(
 watch(
   () => {
     const last = props.messages[props.messages.length - 1]
-    return last?.content?.length ?? 0
+    if (!last) return 0
+    return (last.content?.length ?? 0)
+      + (last.thinkingContent?.length ?? 0)
+      + (last.toolCalls?.length ?? 0)
   },
   () => scrollToBottom(),
 )

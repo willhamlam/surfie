@@ -47,6 +47,7 @@ function handleKeydown(e: KeyboardEvent) {
         variant="destructive"
         size="icon"
         class="h-10 w-10 shrink-0"
+        aria-label="Stop generation"
         @click="$emit('stop')"
       >
         <Square :size="14" />
@@ -56,6 +57,7 @@ function handleKeydown(e: KeyboardEvent) {
         size="icon"
         class="h-10 w-10 shrink-0"
         :disabled="!input.trim()"
+        aria-label="Send message"
         @click="handleSend"
       >
         <Send :size="14" />

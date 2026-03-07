@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { ChatMessage } from '@/types/chat'
+import { renderMarkdown } from '@/lib/markdown'
 import { Badge } from '@/components/ui/badge'
 import { ChevronDown, ChevronRight, Search, Brain, FileText } from 'lucide-vue-next'
 
@@ -20,7 +21,16 @@ function toggleToolDetails(id: string) {
   openToolDetails.value = next
 }
 
-const isUser = props.message.role === 'user'
+const isUser = computed(() => props.message.role === 'user')
+
+const renderedContent = computed(() => {
+  if (!props.message.content) return ''
+  return renderMarkdown(props.message.content)
+})
+
+function toolQuery(params: Record<string, unknown>): string {
+  return typeof params?.query === 'string' ? params.query : ''
+}
 </script>
 
 <template>
@@ -38,7 +48,7 @@ const isUser = props.message.role === 'user'
       <!-- Thinking toggle -->
       <button
         v-if="message.thinkingContent"
-        class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        class="flex items-center gap-1 rounded text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         @click="showThinking = !showThinking"
       >
         <Brain :size="12" />
@@ -53,17 +63,12 @@ const isUser = props.message.role === 'user'
         <pre class="whitespace-pre-wrap font-sans">{{ message.thinkingContent }}</pre>
       </div>
 
-      <!-- Text content -->
+      <!-- Text content (markdown rendered) -->
       <div
         v-if="message.content"
-        class="text-sm leading-relaxed"
-      >
-        <pre class="whitespace-pre-wrap font-sans">{{ message.content }}</pre>
-        <span
-          v-if="isLast && isStreaming && !message.content"
-          class="inline-block h-4 w-1 animate-pulse bg-foreground"
-        />
-      </div>
+        class="message-content text-sm leading-relaxed"
+        v-html="renderedContent"
+      />
 
       <!-- Streaming cursor when no content yet -->
       <div
@@ -81,13 +86,15 @@ const isUser = props.message.role === 'user'
           class="rounded-md border bg-muted/30 p-2"
         >
           <button
-            class="flex w-full items-center gap-1.5 text-xs"
+            class="flex w-full items-center gap-1.5 rounded text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            :aria-label="`${tc.name === 'read_page' ? 'Reading page' : tc.name === 'tavily_search' ? 'Search' : tc.name}: ${toolQuery(tc.params)}`"
+            :aria-expanded="openToolDetails.has(tc.id)"
             @click="toggleToolDetails(tc.id)"
           >
             <FileText v-if="tc.name === 'read_page'" :size="12" class="text-muted-foreground" />
             <Search v-else :size="12" class="text-muted-foreground" />
             <span class="font-medium">{{ tc.name === 'read_page' ? 'Reading page' : tc.name === 'tavily_search' ? 'Searching' : tc.name }}</span>
-            <span class="text-muted-foreground">{{ tc.name === 'tavily_search' ? (tc.params as Record<string, string>).query : '' }}</span>
+            <span class="text-muted-foreground">{{ toolQuery(tc.params) }}</span>
             <Badge
               :variant="tc.status === 'done' ? 'secondary' : tc.status === 'error' ? 'destructive' : 'outline'"
               class="ml-auto text-[10px]"

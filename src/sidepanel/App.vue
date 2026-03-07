@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { useSettings } from '@/composables/useSettings'
 import { useChat } from '@/composables/useChat'
 import { useCurrentTab } from '@/composables/useCurrentTab'
+import { useDarkMode } from '@/composables/useDarkMode'
 import { loadConversation, saveConversation } from '@/lib/storage'
 import type { Conversation } from '@/types/chat'
 import { Settings, ArrowLeft, Trash2 } from 'lucide-vue-next'
@@ -10,8 +12,10 @@ import { Button } from '@/components/ui/button'
 import SettingsView from './SettingsView.vue'
 import ChatView from './ChatView.vue'
 
+useDarkMode()
+
 const currentView = ref<'chat' | 'settings'>('chat')
-const { settings, load: loadSettingsData } = useSettings()
+const { settings, loaded: settingsLoaded, load: loadSettingsData } = useSettings()
 const { currentUrl, pageTitle } = useCurrentTab()
 const {
   messages,
@@ -25,16 +29,20 @@ const {
 
 let previousUrl = ''
 
-// Save conversation when messages change
-watch(messages, async (msgs) => {
-  if (!currentUrl.value || msgs.length === 0) return
+// Save conversation when messages change (debounced to avoid storage thrashing during streaming)
+const debouncedSave = useDebounceFn(async (msgs: ReadonlyArray<import('@/types/chat').ChatMessage>, url: string) => {
+  if (!url || msgs.length === 0) return
   const conversation: Conversation = {
-    url: currentUrl.value,
+    url,
     messages: [...msgs],
     createdAt: msgs[0]?.timestamp ?? Date.now(),
     updatedAt: Date.now(),
   }
   await saveConversation(conversation)
+}, 1500)
+
+watch(messages, (msgs) => {
+  debouncedSave(msgs, currentUrl.value)
 }, { deep: true })
 
 // Load conversation when URL changes
@@ -72,6 +80,7 @@ onMounted(() => {
           size="icon"
           class="h-7 w-7"
           title="Clear chat"
+          aria-label="Clear chat"
           @click="clearMessages"
         >
           <Trash2 :size="14" />
@@ -81,6 +90,7 @@ onMounted(() => {
           size="icon"
           class="h-7 w-7"
           :title="currentView === 'chat' ? 'Settings' : 'Back to chat'"
+          :aria-label="currentView === 'chat' ? 'Settings' : 'Back to chat'"
           @click="currentView = currentView === 'chat' ? 'settings' : 'chat'"
         >
           <Settings v-if="currentView === 'chat'" :size="14" />
@@ -89,8 +99,14 @@ onMounted(() => {
       </div>
     </header>
     <main class="flex-1 overflow-hidden">
+      <div
+        v-if="!settingsLoaded"
+        class="flex h-full items-center justify-center text-sm text-muted-foreground"
+      >
+        Loading...
+      </div>
       <ChatView
-        v-if="currentView === 'chat'"
+        v-else-if="currentView === 'chat'"
         :messages="messages"
         :is-streaming="isStreaming"
         :error="error"
