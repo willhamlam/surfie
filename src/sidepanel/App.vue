@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, toRaw } from 'vue'
 import { useSettings } from '@/composables/useSettings'
 import { useChat } from '@/composables/useChat'
 import { useCurrentTab } from '@/composables/useCurrentTab'
@@ -30,7 +30,15 @@ watch(messages, async (msgs) => {
   if (!currentUrl.value || msgs.length === 0) return
   const conversation: Conversation = {
     url: currentUrl.value,
-    messages: [...msgs],
+    messages: msgs.map(m => {
+      const raw = toRaw(m)
+      return {
+        ...raw,
+        toolCalls: raw.toolCalls
+          ? [...raw.toolCalls].map(tc => ({ ...toRaw(tc) }))
+          : undefined,
+      }
+    }),
     createdAt: msgs[0]?.timestamp ?? Date.now(),
     updatedAt: Date.now(),
   }
