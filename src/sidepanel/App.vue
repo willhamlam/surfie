@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, toRaw } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useSettings } from '@/composables/useSettings'
 import { useChat } from '@/composables/useChat'
@@ -34,7 +34,15 @@ const debouncedSave = useDebounceFn(async (msgs: ReadonlyArray<import('@/types/c
   if (!url || msgs.length === 0) return
   const conversation: Conversation = {
     url,
-    messages: [...msgs],
+    messages: msgs.map(m => {
+      const raw = toRaw(m)
+      return {
+        ...raw,
+        toolCalls: raw.toolCalls
+          ? [...raw.toolCalls].map(tc => ({ ...toRaw(tc) }))
+          : undefined,
+      }
+    }),
     createdAt: msgs[0]?.timestamp ?? Date.now(),
     updatedAt: Date.now(),
   }
