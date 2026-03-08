@@ -75,7 +75,7 @@ function toolQuery(params: Record<string, unknown>): string {
         v-if="isLast && isStreaming && !message.content && !message.thinkingContent"
         class="flex items-center gap-1 text-sm text-muted-foreground"
       >
-        <span class="inline-block h-4 w-1 animate-pulse bg-foreground" />
+        <span class="inline-block h-4 w-1 animate-pulse bg-primary" />
       </div>
 
       <!-- Tool calls -->

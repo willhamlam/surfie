@@ -31,7 +31,7 @@ function handleKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="border-t p-3">
+  <div class="border-t border-border/70 p-3">
     <div class="flex gap-2">
       <Textarea
         v-model="input"
